@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1B5E20" />
+    <meta name="color-scheme" content="light" />
+    <title>Админ-панель — МОСРЕГСЕПТИК</title>
+    <meta
+      name="description"
+      content="Локальная демонстрационная панель управления каталогом и контентом сайта МОСРЕГСЕПТИК."
+    />
+    <meta name="keywords" content="админ-панель, МОСРЕГСЕПТИК" />
+    <meta name="author" content="МОСРЕГСЕПТИК" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="canonical" href="https://mosregseptik.ru/admin.html" />
+    <link rel="alternate" hreflang="ru" href="https://mosregseptik.ru/admin.html" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="geo.region" content="RU-MOW" />
+    <meta name="geo.placename" content="Москва" />
+    <meta name="rating" content="general" />
+    <meta name="apple-mobile-web-app-title" content="МОСРЕГСЕПТИК" />
+    <meta name="application-name" content="МОСРЕГСЕПТИК" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="МОСРЕГСЕПТИК" />
+    <meta property="og:title" content="Админ-панель — МОСРЕГСЕПТИК" />
+    <meta
+      property="og:description"
+      content="Локальная демонстрационная панель управления каталогом и контентом сайта МОСРЕГСЕПТИК."
+    />
+    <meta property="og:url" content="https://mosregseptik.ru/admin.html" />
+    <meta property="og:image" content="https://mosregseptik.ru/assets/images/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="МОСРЕГСЕПТИК — септики под ключ в Москве и МО" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Админ-панель — МОСРЕГСЕПТИК" />
+    <meta
+      name="twitter:description"
+      content="Локальная демонстрационная панель управления каталогом и контентом сайта МОСРЕГСЕПТИК."
+    />
+    <meta name="twitter:image" content="https://mosregseptik.ru/assets/images/og-image.svg" />
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+  </head>
+  <body class="admin-body">
+    <header class="admin-topbar">
+      <div class="container">
+        <a class="brand" href="index.html" aria-label="МОСРЕГСЕПТИК — главная"
+          ><img src="assets/images/logo.svg" alt="" width="64" height="70" /><span
+            ><span class="brand-name">МОСРЕГ<span>СЕПТИК</span></span
+            ><span class="brand-tagline">Инженерные системы для загородной жизни</span></span
+          ></a
+        >
+        <div class="admin-top-actions">
+          <a href="index.html">← На сайт</a
+          ><button class="btn btn--light btn--small" type="button" id="admin-logout">Выйти</button>
+        </div>
+      </div>
+    </header>
+    <main class="admin-main container" id="main">
+      <section class="admin-login" id="admin-login" aria-labelledby="login-title">
+        <img src="assets/images/logo.svg" alt="" width="64" height="70" />
+        <p class="eyebrow">Управление сайтом</p>
+        <h1 id="login-title">Вход в админ-панель</h1>
+        <p>Редактируйте каталог и контент. Изменения сохраняются в этом браузере.</p>
+        <form id="admin-login-form">
+          <div class="field">
+            <label for="admin-password">Пароль</label
+            ><input
+              id="admin-password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              aria-describedby="admin-login-error"
+            />
+          </div>
+          <p class="field-error" id="admin-login-error" role="alert" hidden></p>
+          <button class="btn btn--wide" type="submit">Войти</button>
+        </form>
+        <div class="demo-warning">
+          <strong>Локальная демо-защита.</strong> Пароль по умолчанию:
+          <code>mosregseptik2024</code>. Он хранится в открытом JS и не защищает данные от просмотра
+          или изменения. Для production нужны серверная авторизация и API.
+        </div>
+      </section>
+      <section id="admin-dashboard" hidden aria-label="Панель управления">
+        <div class="admin-heading">
+          <div>
+            <h2 class="admin-title">Управление сайтом</h2>
+            <p>МОСРЕГСЕПТИК · Данные этого браузера</p>
+          </div>
+          <div class="admin-actions">
+            <button class="btn btn--outline btn--small" type="button" id="export-json">
+              Экспорт JSON</button
+            ><button class="btn btn--outline btn--small" type="button" id="import-json-button">
+              Импорт JSON</button
+            ><button class="btn btn--danger btn--small" type="button" id="reset-all">
+              Сбросить к заводским настройкам</button
+            ><input type="file" id="import-json" accept=".json,application/json" hidden />
+          </div>
+        </div>
+        <p class="demo-warning">
+          Данные хранятся в localStorage конкретного браузера и не синхронизируются с другими
+          устройствами. После сохранения обновите публичную страницу. Перед импортом и сбросом
+          сделайте экспорт.
+        </p>
+        <div class="admin-tabs" role="tablist" aria-label="Разделы управления">
+          <button
+            class="admin-tab"
+            id="tab-products"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-products"
+            tabindex="0"
+          >
+            Септики</button
+          ><button
+            class="admin-tab"
+            id="tab-content"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-content"
+            tabindex="-1"
+          >
+            Контент
+          </button>
+        </div>
+        <section
+          class="admin-panel"
+          id="panel-products"
+          role="tabpanel"
+          aria-labelledby="tab-products"
+        >
+          <div class="panel-heading">
+            <div>
+              <h2>Каталог септиков</h2>
+              <p data-admin-product-count></p>
+            </div>
+            <button class="btn" type="button" data-add-product>+ Добавить септик</button>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Название</th>
+                  <th scope="col">Бренд</th>
+                  <th scope="col">Объём, л</th>
+                  <th scope="col">Цена</th>
+                  <th scope="col">Человек</th>
+                  <th scope="col">Действия</th>
+                </tr>
+              </thead>
+              <tbody data-products-table></tbody>
+            </table>
+          </div>
+        </section>
+        <section
+          class="admin-panel"
+          id="panel-content"
+          role="tabpanel"
+          aria-labelledby="tab-content"
+          hidden
+        >
+          <div class="panel-heading">
+            <div>
+              <h2>Контент сайта</h2>
+              <p>Выберите блок слева. Нажмите на любой текст в панели справа для редактирования, затем «Сохранить блок».</p>
+            </div>
+            <div class="wysiwyg-actions">
+              <button class="btn btn--small" type="button" id="wysiwyg-save" disabled>💾 Сохранить блок</button>
+              <button class="btn btn--outline btn--small" type="button" id="wysiwyg-cancel" disabled>Отмена</button>
+            </div>
+          </div>
+          <div class="wysiwyg-layout">
+            <nav class="wysiwyg-sidebar" data-admin-sections aria-label="Блоки контента">
+              <p class="wysiwyg-sidebar-hint">Выберите блок для редактирования</p>
+            </nav>
+            <div class="wysiwyg-viewport">
+              <div class="wysiwyg-viewport-empty" id="wysiwyg-empty">
+                <p>👈 Выберите блок в списке слева</p>
+              </div>
+              <iframe class="wysiwyg-frame" id="wysiwyg-frame" sandbox="allow-same-origin" title="Редактор контента"></iframe>
+            </div>
+          </div>
+        </section>
+        <p class="admin-footer-note">
+          Статические SEO-метатеги и JSON-LD не перестраиваются из localStorage. После изменения
+          ассортимента обновите их в HTML перед публикацией.
+        </p>
+      </section>
+    </main>
+    <dialog class="dialog" id="product-dialog" aria-labelledby="product-dialog-title">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h2 id="product-dialog-title">Добавить септик</h2>
+          <button class="icon-button" type="button" data-modal-close aria-label="Закрыть форму">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6 6 12 12M6 18 18 6" />
+            </svg>
+          </button>
+        </div>
+        <form id="product-form" novalidate>
+          <input type="hidden" name="id" />
+          <div class="admin-form-grid">
+            <div class="field">
+              <label for="p-name">Название *</label
+              ><input id="p-name" name="name" required minlength="2" maxlength="120" />
+            </div>
+            <div class="field">
+              <label for="p-brand">Бренд *</label
+              ><input
+                id="p-brand"
+                name="brand"
+                required
+                minlength="2"
+                maxlength="80"
+                list="brand-suggestions"
+              /><datalist id="brand-suggestions">
+                <option value="Топас"></option>
+                <option value="Евролос"></option>
+                <option value="Астра"></option>
+                <option value="Малахит"></option>
+              </datalist>
+            </div>
+            <div class="field">
+              <label for="p-volume">Объём, л *</label
+              ><input id="p-volume" name="volume" type="number" min="1" max="100000000" required />
+            </div>
+            <div class="field">
+              <label for="p-price">Цена, ₽ *</label
+              ><input id="p-price" name="price" type="number" min="1" max="100000000" required />
+            </div>
+            <div class="field">
+              <label for="p-persons">Количество человек *</label
+              ><input
+                id="p-persons"
+                name="persons"
+                type="number"
+                min="1"
+                max="1000"
+                step="1"
+                required
+              />
+            </div>
+            <div class="field">
+              <label for="p-category">Категория *</label
+              ><select id="p-category" name="category">
+                <option value="station">Станция биоочистки</option>
+                <option value="septic">Септик</option>
+                <option value="storage">Накопитель</option>
+              </select>
+            </div>
+            <div class="field field--wide">
+              <label for="p-description">Описание *</label
+              ><textarea
+                id="p-description"
+                name="description"
+                required
+                minlength="10"
+                rows="3"
+              ></textarea>
+            </div>
+            <div class="field field--wide">
+              <label for="p-image">URL изображения *</label
+              ><input
+                id="p-image"
+                name="image"
+                required
+                value="assets/images/septic-topas.svg"
+              /><span class="field-hint"
+                >Локальный путь assets/… или http(s)-URL.</span
+              >
+              <div class="image-upload-area">
+                <label for="p-image-file" class="image-upload-btn"
+                  ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                    />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  Загрузить с компьютера</label
+                ><input
+                  id="p-image-file"
+                  type="file"
+                  accept="image/*"
+                  hidden
+                />
+                <span class="image-preview" id="p-image-preview"></span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="p-badge">Метка на карточке</label
+              ><input id="p-badge" name="badge" maxlength="80" placeholder="Например, Для дачи" />
+            </div>
+            <div class="field">
+              <label for="p-featured">Популярный товар</label
+              ><label class="consent"
+                ><input id="p-featured" name="featured" type="checkbox" />Показывать среди
+                популярных</label
+              >
+            </div>
+          </div>
+          <p class="field-error" id="product-form-error" role="alert" hidden></p>
+          <button class="btn btn--wide" type="submit">Сохранить септик</button>
+        </form>
+      </div>
+    </dialog>
+    <dialog class="dialog" id="delete-dialog" aria-labelledby="delete-dialog-title">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h2 id="delete-dialog-title">Удалить септик?</h2>
+          <button class="icon-button" type="button" data-modal-close aria-label="Отмена">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6 6 12 12M6 18 18 6" />
+            </svg>
+          </button>
+        </div>
+        <p id="delete-product-name"></p>
+        <p class="muted small">
+          Карточка будет удалена из локального каталога. Это действие можно отменить только
+          восстановлением резервной копии.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn--danger" type="button" id="confirm-delete-product">Удалить</button
+          ><button class="btn btn--outline" type="button" data-modal-close data-autofocus>
+            Отмена
+          </button>
+        </div>
+      </div>
+    </dialog>
+    <dialog class="dialog" id="reset-dialog" aria-labelledby="reset-dialog-title">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h2 id="reset-dialog-title">Сбросить все изменения?</h2>
+          <button class="icon-button" type="button" data-modal-close aria-label="Отмена">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6 6 12 12M6 18 18 6" />
+            </svg>
+          </button>
+        </div>
+        <p class="muted">
+          Каталог и контент вернутся к заводским данным. Сначала экспортируйте JSON, если хотите
+          сохранить текущую версию.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn--danger" type="button" id="confirm-reset">Да, сбросить</button
+          ><button class="btn btn--outline" type="button" data-modal-close data-autofocus>
+            Отмена
+          </button>
+        </div>
+      </div>
+    </dialog>
+    <div
+      class="toast-region"
+      data-toast-region
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+    ></div>
+    <!-- SVG sprite для админки -->
+    <svg style="display:none" aria-hidden="true">
+      <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+      <symbol id="truck" viewBox="0 0 24 24"><path d="M3 5h11v12H3zM14 9h4l3 4v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+      <symbol id="file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6"/></symbol>
+      <symbol id="wallet" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 8h18M16 12h5v5h-5z"/></symbol>
+      <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/></symbol>
+      <symbol id="settings" viewBox="0 0 24 24"><path d="m9 3-1 3-3 1-2 5 2 5 3 1 1 3h6l1-3 3-1 2-5-2-5-3-1-1-3Z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      <symbol id="leaf" viewBox="0 0 24 24"><path d="M20 3C8 2 3 8 5 15s15 8 15-12Z"/><path d="M4 21 16 9"/></symbol>
+    </svg>
+    <script type="module" src="js/admin.mjs"></script>
+  </body>
+</html>

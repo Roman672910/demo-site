@@ -1,0 +1,38 @@
+{
+  "id": "/",
+  "name": "МОСРЕГСЕПТИК",
+  "short_name": "МОСРЕГСЕПТИК",
+  "description": "Продажа и установка септиков под ключ для дачи и частного дома. Москва и МО.",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#1B5E20",
+  "background_color": "#F1F8E9",
+  "icons": [
+    {
+      "src": "assets/icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Каталог септиков",
+      "url": "/catalog.html",
+      "icons": [{ "src": "assets/icons/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Услуги",
+      "url": "/services.html",
+      "icons": [{ "src": "assets/icons/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}
