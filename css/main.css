@@ -188,6 +188,7 @@ textarea {
   gap: 10px;
   text-decoration: none;
   flex-shrink: 0;
+  cursor: pointer;
 }
 .brand img {
   width: 43px;
@@ -200,8 +201,16 @@ textarea {
   letter-spacing: -0.055em;
   line-height: 1.2;
 }
-.brand-name span {
-  color: var(--color-primary-light);
+.brand-mosreg {
+  color: var(--color-text);
+  transition: color var(--duration-normal) var(--ease-out);
+}
+.brand-septik {
+  color: var(--color-primary);
+}
+.brand:hover .brand-mosreg,
+.brand:focus .brand-mosreg {
+  color: var(--color-primary);
 }
 .brand-tagline {
   display: block;
@@ -380,7 +389,14 @@ textarea {
   color: white;
   font-size: 21px;
 }
-.site-footer .brand-name span {
+.site-footer .brand-mosreg {
+  color: white;
+  transition: color var(--duration-normal) var(--ease-out);
+}
+.site-footer .brand-septik {
+  color: var(--color-mint);
+}
+.site-footer .brand:hover .brand-mosreg {
   color: var(--color-mint);
 }
 .site-footer .brand-tagline {

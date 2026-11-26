@@ -3,6 +3,7 @@ import { getContent, escapeHtml, formatPrice } from './storage.mjs';
 import { initNavigation, initContacts } from './nav.mjs';
 import { initDialogs, initImageFallback, icon, galleryCard } from './ui.mjs';
 import { initForms } from './form.mjs';
+import { initAdminMode } from './admin-mode.mjs';
 
 function renderContentBlocks() {
   const content = getContent();
@@ -131,6 +132,7 @@ export function initApp() {
   initImageFallback();
   initDialogs();
   initForms();
+  initAdminMode();
   document.addEventListener('storage-warning', (event) => {
     const notice = document.createElement('div');
     notice.className = 'site-notice';

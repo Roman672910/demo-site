@@ -12,7 +12,7 @@ export const defaultProducts = [
     price: 145000,
     persons: 5,
     category: 'station',
-    image: 'https://static.tildacdn.com/tild3661-6536-4936-a664-376335373863/1.webp',
+    image: 'assets/images/septic-eurols-bio.svg',
     description:
       'Вертикальная станция с биофильтром. Переработка 1 м³/сут, потребление 0.8 кВт/сут, очистка 98%.',
     badge: 'Популярный',
@@ -30,7 +30,7 @@ export const defaultProducts = [
     price: 172000,
     persons: 5,
     category: 'station',
-    image: 'assets/images/septic-topas-5pr.webp',
+    image: 'assets/images/septic-topas.svg',
     description:
       'УОСВ на 5 пользователей. Залповый сброс 220 л, очистка 98%, потребление 1.5 кВт/сут.',
     badge: 'Для дома',
@@ -48,7 +48,7 @@ export const defaultProducts = [
     price: 125000,
     persons: 5,
     category: 'station',
-    image: 'https://static.tildacdn.com/tild3338-3164-4564-a230-646637643235/1.webp',
+    image: 'assets/images/septic-malahit.svg',
     description:
       'Многокамерная станция с принудительным выбросом. Очистка 98%, потребление 1.2 кВт/сут.',
     badge: 'Для дома',
@@ -66,7 +66,7 @@ export const defaultProducts = [
     price: 171000,
     persons: 8,
     category: 'station',
-    image: 'https://static.tildacdn.com/tild3762-3135-4630-b461-353062333934/1-1-pn-x350-9d2.webp',
+    image: 'assets/images/septic-astra.svg',
     description:
       'Станция на 8 пользователей. Переработка 1.6 м³/сут, залповый сброс 350 л, потребление 1.92 кВт/сут.',
     badge: 'Для большой семьи',
@@ -84,7 +84,7 @@ export const defaultProducts = [
     price: 145000,
     persons: 5,
     category: 'station',
-    image: 'assets/images/septic-unilos-astra-5.webp',
+    image: 'assets/images/septic-astra.svg',
     description:
       'Компактная станция на 5 человек. Переработка 1 м³/сут, залповый сброс 250 л.',
     badge: 'Популярный',
@@ -102,7 +102,7 @@ export const defaultProducts = [
     price: 183000,
     persons: 7,
     category: 'station',
-    image: 'assets/images/septic-tver-1.1.webp',
+    image: 'assets/images/septic-topas.svg',
     description:
       'Многокамерная очистная станция на 7 пользователей. Очистка 90–98%, работает без электричества.',
     badge: 'Надёжный',

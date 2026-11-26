@@ -26,6 +26,35 @@ const text = (value, min = 1, max = 5000) =>
 const positive = (value) =>
   typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 100000000;
 
+// Максимальный размер localStorage (примерно 5МБ)
+const MAX_STORAGE_SIZE = 4.5 * 1024 * 1024;
+
+// Проверяем размер хранилища и сбрасываем если переполнен
+function checkStorageSize() {
+  try {
+    let totalSize = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      totalSize += key.length + localStorage.getItem(key).length * 2; // UTF-16
+    }
+    if (totalSize > MAX_STORAGE_SIZE) {
+      // Переполнение — сбрасываем к заводским данным
+      remove(KEYS.products);
+      remove(KEYS.content);
+      try {
+        localStorage.setItem('mosregseptik.version', String(DATA_VERSION));
+      } catch { /* ignore */ }
+      storageWarningShown = true;
+      document.dispatchEvent(
+        new CustomEvent('storage-warning', {
+          detail: 'Хранилище переполнено. Данные сброшены к заводским настройкам.',
+        }),
+      );
+      return false;
+    }
+  } catch { /* ignore */ }
+  return true;
+}
 // Проверяем версию хранилища — если не совпадает, сбрасываем кэш
 function checkVersion() {
   try {
@@ -89,11 +118,14 @@ function parse(raw) {
 export function validateProduct(input, partial = false) {
   if (!isObject(input)) return { ok: false, error: 'Карточка должна быть объектом.' };
   const source = partial ? { ...input } : { featured: false, badge: '', ...input };
-  if (!partial && (!text(source.id, 1, 100) || !/^[a-zA-Z0-9_-]+$/.test(source.id)))
-    return {
-      ok: false,
-      error: 'Некорректный ID: используйте латиницу, цифры, дефис и подчёркивание.',
-    };
+  // Мягкая проверка ID: если ID есть, но содержит недопустимые символы — предупреждаем.
+// Если ID пустой — пропускаем (он будет сгенерирован автоматически).
+if (!partial && source.id && !/^[a-zA-Z0-9_.-]+$/.test(source.id)) {
+  return {
+    ok: false,
+    error: 'ID должен содержать только латиницу, цифры, дефис, подчёркивание и точку.',
+  };
+}
   if (source.name !== undefined && !text(source.name, 2, 120))
     return { ok: false, error: 'Название: от 2 до 120 символов.' };
   if (!partial && source.name === undefined) return { ok: false, error: 'Укажите название.' };
@@ -112,6 +144,16 @@ export function validateProduct(input, partial = false) {
     return { ok: false, error: 'Описание: от 10 до 3000 символов.' };
   if (source.image !== undefined && !safeImageUrl(source.image))
     return { ok: false, error: 'Изображение: локальный путь assets/… или корректный http(s)-URL.' };
+  if (source.images !== undefined) {
+    if (!Array.isArray(source.images))
+      return { ok: false, error: 'Дополнительные изображения: массив URL.' };
+    if (source.images.length > 10)
+      return { ok: false, error: 'Дополнительные изображения: максимум 10 штук.' };
+    for (let i = 0; i < source.images.length; i++) {
+      if (!safeImageUrl(source.images[i]))
+        return { ok: false, error: `Дополнительное изображение #${i + 1}: некорректный URL.` };
+    }
+  }
   if (source.category !== undefined && !Object.hasOwn(CATEGORIES, source.category))
     return { ok: false, error: 'Неизвестная категория.' };
   if (!partial) {
@@ -135,6 +177,7 @@ export function validateProduct(input, partial = false) {
         'category',
         'badge',
         'featured',
+        'images',
       ].includes(key),
     ),
   );
@@ -144,9 +187,13 @@ export function validateProduct(input, partial = false) {
 }
 function safeImageUrl(value) {
   if (!value || typeof value !== 'string') return false;
-  if (/\s/.test(value) || /[<>"']/.test(value)) return false;
-  // base64 data URI для загруженных изображений — без ограничения длины
-  if (value.startsWith('data:image/')) return true;
+  // base64 data URI — разрешаем полностью (содержит +, =, / которые не являются пробелами)
+  if (value.startsWith('data:image/')) {
+    // Проверяем что это валидный data URI (не слишком длинный и без опасных символов)
+    if (value.length > 10 * 1024 * 1024) return false; // 10MB limit
+    return true;
+  }
+  if (/[<>"']/.test(value)) return false;
   // Внешние URL (Tilda CDN и другие)
   if (/^https?:\/\/.+/i.test(value)) {
     try {
@@ -187,10 +234,11 @@ export function saveProducts(products) {
   return clone(result.products);
 }
 export function addProduct(product) {
-  const id =
-    globalThis.crypto?.randomUUID?.() ??
-    `product-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-  const result = validateProduct({ ...product, id });
+  // Всегда генерируем новый id — игнорируем пустой id из формы
+  const id = `product-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const clean = { ...product, id };
+  delete clean.id; // удаляем id из формы, подставим сгенерированный
+  const result = validateProduct({ ...clean, id });
   if (!result.ok) throw new Error(result.error);
   const products = getProducts();
   products.push(result.product);
@@ -201,9 +249,16 @@ export function updateProduct(id, patch) {
   const products = getProducts();
   const index = products.findIndex((product) => product.id === id);
   if (index < 0) throw new Error('Септик не найден.');
-  if (Object.hasOwn(patch, 'id') && patch.id !== id)
+  if (patch.id && patch.id !== id)
     throw new Error('ID существующего товара менять нельзя.');
-  const result = validateProduct({ ...products[index], ...patch });
+  // Не передаём пустой/невалидный id из формы — оставляем существующий
+  const cleanPatch = { ...patch };
+  if (!cleanPatch.id || !/^[a-zA-Z0-9_.-]+$/.test(cleanPatch.id)) {
+    delete cleanPatch.id;
+  }
+  // products[index] уже содержит верный id — merge перекроет только изменённые поля
+  const combined = { ...products[index], ...cleanPatch };
+  const result = validateProduct(combined);
   if (!result.ok) throw new Error(result.error);
   products[index] = result.product;
   saveProducts(products);
@@ -257,6 +312,96 @@ function validateCollection(items, name, fields, min = 1, max = 50) {
 }
 function typeIcon(icon) {
   return typeof icon === 'string' && /^[a-z-]+$/.test(icon);
+}
+function safeUrl(value) {
+  if (!value || typeof value !== 'string') return '';
+  if (value.startsWith('http')) {
+    try { new URL(value); return value; } catch { return ''; }
+  }
+  if (value.startsWith('assets/') || value.startsWith('#') || value.startsWith('/')) return value;
+  return '';
+}
+function safeLink(value, defaultText) {
+  if (!isObject(value)) return { text: defaultText, href: '' };
+  return {
+    text: text(value.text, 1, 200) ? value.text.trim() : defaultText,
+    href: safeUrl(value.href),
+  };
+}
+function validateHero(input) {
+  if (!isObject(input)) return clone(defaultContent.hero);
+  const h = clone(defaultContent.hero);
+  if (text(input.title, 5, 300)) h.title = input.title.trim();
+  if (text(input.description, 10, 2000)) h.description = input.description.trim();
+  if (text(input.epigraph, 1, 120)) h.epigraph = input.epigraph.trim();
+  if (text(input.stickerText, 1, 100)) h.stickerText = input.stickerText.trim();
+  if (text(input.stickerSubtext, 1, 150)) h.stickerSubtext = input.stickerSubtext.trim();
+  h.ctaPrimary = safeLink(input.ctaPrimary, h.ctaPrimary.text);
+  h.ctaSecondary = safeLink(input.ctaSecondary, h.ctaSecondary.text);
+  return h;
+}
+function validateFooter(input) {
+  if (!isObject(input)) return clone(defaultContent.footer);
+  const f = clone(defaultContent.footer);
+  if (text(input.copyright, 1, 200)) f.copyright = input.copyright.trim();
+  if (text(input.privacyLabel, 1, 120)) f.privacyLabel = input.privacyLabel.trim();
+  if (text(input.disclaimer, 1, 200)) f.disclaimer = input.disclaimer.trim();
+  if (text(input.adminLink, 1, 100)) f.adminLink = input.adminLink.trim();
+  if (text(input.aboutText, 5, 500)) f.aboutText = input.aboutText.trim();
+  if (text(input.ctaText, 5, 300)) f.ctaText = input.ctaText.trim();
+  if (Array.isArray(input.menuLinks)) {
+    const links = [];
+    for (const lk of input.menuLinks) {
+      if (isObject(lk) && text(lk.text, 1, 80)) {
+        links.push({ id: lk.id || `link-${Date.now()}`, text: lk.text.trim(), href: safeUrl(lk.href) });
+      }
+    }
+    if (links.length) f.menuLinks = links;
+  }
+  return f;
+}
+function validateNavigation(input) {
+  if (!isObject(input)) return clone(defaultContent.navigation);
+  const n = clone(defaultContent.navigation);
+  if (text(input.label, 1, 80)) n.label = input.label.trim();
+  if (Array.isArray(input.links)) {
+    const links = [];
+    for (const lk of input.links) {
+      if (isObject(lk) && text(lk.text, 1, 80)) {
+        links.push({ id: lk.id || `nav-${Date.now()}`, text: lk.text.trim(), href: safeUrl(lk.href) });
+      }
+    }
+    if (links.length) n.links = links;
+  }
+  return n;
+}
+function validateSeo(input) {
+  if (!isObject(input)) return clone(defaultContent.seo);
+  const s = clone(defaultContent.seo);
+  if (text(input.defaultTitle, 2, 120)) s.defaultTitle = input.defaultTitle.trim();
+  if (text(input.defaultDescription, 10, 300)) s.defaultDescription = input.defaultDescription.trim();
+  if (text(input.defaultKeywords, 5, 500)) s.defaultKeywords = input.defaultKeywords.trim();
+  if (text(input.ogImage, 1, 500)) s.ogImage = input.ogImage.trim();
+  if (Number.isFinite(input.ogImageWidth) && input.ogImageWidth > 0) s.ogImageWidth = input.ogImageWidth;
+  if (Number.isFinite(input.ogImageHeight) && input.ogImageHeight > 0) s.ogImageHeight = input.ogImageHeight;
+  if (text(input.canonical, 1, 500)) s.canonical = input.canonical.trim();
+  if (text(input.twitterHandle, 1, 50)) s.twitterHandle = input.twitterHandle.trim();
+  return s;
+}
+function validatePageSettings(input) {
+  if (!isObject(input)) return clone(defaultContent.pageSettings);
+  const ps = clone(defaultContent.pageSettings);
+  const pages = Object.keys(defaultContent.pageSettings);
+  for (const page of pages) {
+    if (input[page] && isObject(input[page])) {
+      const src = input[page];
+      const pg = ps[page];
+      if (text(src.title, 2, 120)) pg.title = src.title.trim();
+      if (text(src.description, 10, 300)) pg.description = src.description.trim();
+      if (text(src.keywords, 5, 500)) pg.keywords = src.keywords.trim();
+    }
+  }
+  return ps;
 }
 export function validateContent(input) {
   try {
@@ -349,6 +494,12 @@ export function validateContent(input) {
       throw new Error('Телефон должен содержать 11 цифр.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.contacts.email))
       throw new Error('Некорректный email.');
+    // Новые поля
+    c.hero = validateHero(input.hero);
+    c.footer = validateFooter(input.footer);
+    c.navigation = validateNavigation(input.navigation);
+    c.seo = validateSeo(input.seo);
+    c.pageSettings = validatePageSettings(input.pageSettings);
     return { ok: true, content: c };
   } catch (error) {
     return { ok: false, error: error.message };
@@ -363,6 +514,47 @@ export function saveContent(content) {
   if (!result.ok) throw new Error(result.error);
   write(KEYS.content, result.content);
   return clone(result.content);
+}
+// Геттеры/сеттеры для отдельных секций
+export function getHero() {
+  return getContent().hero;
+}
+export function saveHero(hero) {
+  const content = getContent();
+  content.hero = validateHero(hero);
+  return saveContent(content);
+}
+export function getFooter() {
+  return getContent().footer;
+}
+export function saveFooter(footer) {
+  const content = getContent();
+  content.footer = validateFooter(footer);
+  return saveContent(content);
+}
+export function getNavigation() {
+  return getContent().navigation;
+}
+export function saveNavigation(nav) {
+  const content = getContent();
+  content.navigation = validateNavigation(nav);
+  return saveContent(content);
+}
+export function getSeo() {
+  return getContent().seo;
+}
+export function saveSeo(seo) {
+  const content = getContent();
+  content.seo = validateSeo(seo);
+  return saveContent(content);
+}
+export function getPageSettings() {
+  return getContent().pageSettings;
+}
+export function savePageSettings(ps) {
+  const content = getContent();
+  content.pageSettings = validatePageSettings(ps);
+  return saveContent(content);
 }
 export function resetContent() {
   remove(KEYS.content);

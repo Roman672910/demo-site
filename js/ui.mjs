@@ -43,8 +43,20 @@ export function productCard(product) {
   if (product.peakDrain) {
     specs.push(`<span>${icon('check')}${product.peakDrain} л</span>`);
   }
+  // Дополнительные изображения
+  const extraImages = product.images && Array.isArray(product.images) && product.images.length
+    ? product.images.filter(src => src)
+    : [];
+  const imageCount = 1 + extraImages.length;
+  const imageCounter = imageCount > 1
+    ? `<span class="product-image-count">${icon('zoom')} ${imageCount}</span>`
+    : '';
+  const extraImagesHtml = extraImages.length
+    ? `<div class="product-extra-images">${extraImages.map(src => `<img src="${src}" alt="${p.name}" loading="lazy" decoding="async" />`).join('')}</div>`
+    : '';
   return `<article class="product-card" id="product-${p.id}">
-    <div class="product-image"><img src="${p.image}" alt="${p.name} — септик ${p.brand}" width="640" height="480" loading="lazy" decoding="async">${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}</div>
+    <div class="product-image"><img src="${p.image}" alt="${p.name} — септик ${p.brand}" width="640" height="480" loading="lazy" decoding="async">${imageCounter}${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}</div>
+    ${extraImagesHtml}
     <div class="product-body"><p class="product-brand">${p.brand}</p><p class="product-manufacturer">${p.manufacturer || ''}</p><h3>${p.name}</h3>
       <div class="product-specs">${specs.join('')}</div>
       <p class="product-description">${p.description}</p>

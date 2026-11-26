@@ -3,6 +3,9 @@ import { ADMIN_PASSWORD, exportData, importData, resetAll } from './storage.mjs'
 import { initDialogs, closeDialog } from './ui.mjs';
 import { initAdminCrud } from './admin-crud.mjs';
 import { initWysiwygEditor } from './admin-wysiwyg.mjs';
+import { initHeroSeoEditor } from './admin-hero-seo.mjs';
+import { initSettingsEditor } from './admin-settings.mjs';
+import { initBackupsPanel } from './admin-backups.mjs';
 
 const SESSION_KEY = 'mosregseptik.admin.demo-session';
 let sessionFallback = false;
@@ -64,6 +67,9 @@ export function initAdmin() {
       crud = initAdminCrud({ notify });
       initTabs();
       initWysiwygEditor();
+      initHeroSeoEditor();
+      initSettingsEditor();
+      initBackupsPanel();
     } else crud.refresh();
   }
   loginForm.addEventListener('submit', (event) => {
@@ -99,56 +105,6 @@ export function initAdmin() {
     login.hidden = false;
     password.focus();
     notify('Вы вышли из админ-панели.');
-  });
-  document.getElementById('export-json').addEventListener('click', () => {
-    const blob = new Blob([exportData()], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `mosregseptik-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    notify('Резервная копия JSON подготовлена.');
-  });
-  const importInput = document.getElementById('import-json');
-  document
-    .getElementById('import-json-button')
-    .addEventListener('click', () => importInput.click());
-  importInput.addEventListener('change', async () => {
-    const file = importInput.files?.[0];
-    if (!file) return;
-    try {
-      if (file.size > 5 * 1024 * 1024) throw new Error('Файл слишком большой: максимум 5 МБ.');
-      const json = await file.text();
-      // Сначала проверяем формат, затем спрашиваем подтверждение замены.
-      const parsed = JSON.parse(json);
-      if (parsed?.version !== 1 || !Array.isArray(parsed.products) || !parsed.content)
-        throw new Error('Нужна резервная копия МОСРЕГСЕПТИК версии 1.');
-      if (!confirm(`Заменить все товары (${parsed.products.length}) и контент данными из файла?`))
-        return;
-      const result = importData(json);
-      if (!result.ok) throw new Error(result.error);
-      location.reload();
-    } catch (exception) {
-      notify(`Импорт отменён: ${exception.message}`, true);
-    } finally {
-      importInput.value = '';
-    }
-  });
-  document.getElementById('reset-all').addEventListener('click', () => {
-    document.getElementById('reset-dialog').showModal();
-    document.body.classList.add('modal-open');
-  });
-  document.getElementById('confirm-reset').addEventListener('click', () => {
-    try {
-      resetAll();
-      closeDialog(document.getElementById('reset-dialog'));
-      location.reload();
-    } catch (exception) {
-      notify(exception.message, true);
-    }
   });
   if (isAuthenticated()) showDashboard();
   else password.focus();

@@ -281,6 +281,47 @@
   font-size: 10px;
   font-weight: 700;
 }
+.product-image-count {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 2;
+}
+.product-image-count .icon {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.product-extra-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+  padding: 8px 16px 12px;
+  background: #fafafa;
+}
+.product-extra-images img {
+  width: 100%;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  transition: opacity var(--duration-slow) var(--ease-out);
+}
+.product-extra-images img:hover {
+  opacity: 0.85;
+}
 .product-body {
   padding: 22px;
   display: flex;
@@ -930,11 +971,26 @@ textarea:focus {
   border-radius: var(--radius-md);
   transition:
     transform var(--duration-normal) var(--ease-out),
-    box-shadow var(--duration-normal) var(--ease-out);
+    box-shadow var(--duration-normal) var(--ease-out),
+    border-color var(--duration-normal) var(--ease-out),
+    background var(--duration-normal) var(--ease-out);
+  cursor: default;
 }
 .contact-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-sm);
+}
+.contact-card[data-map-point] {
+  cursor: pointer;
+}
+.contact-card[data-map-point]:hover {
+  border-color: var(--color-primary);
+  background: rgb(243 248 240 / 0.6);
+}
+.contact-card[data-map-point].map-active {
+  border-color: var(--color-primary);
+  background: rgb(232 242 226 / 0.5);
+  box-shadow: 0 0 0 3px rgb(102 187 106 / 15%);
 }
 .contact-card > .icon {
   color: var(--color-primary-light);
@@ -965,6 +1021,23 @@ textarea:focus {
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--color-bg);
+}
+.map-figure .map-hint {
+  margin: 0;
+  padding: 12px 20px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: white;
+  border-bottom: 1px solid var(--color-border);
+  text-align: center;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.map-figure .map-hint.hidden {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  height: 0;
+  overflow: hidden;
 }
 .map-figure img {
   width: 100%;
@@ -1205,5 +1278,272 @@ textarea:focus {
   }
   .grid {
     gap: 24px;
+  }
+}
+
+/* ============================================
+   INLINE ADMIN MODE
+   ============================================ */
+
+/* Body when admin mode is active */
+body.admin-mode {
+  cursor: default;
+}
+
+/* Overlay for password dialog */
+.admin-password-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgb(0 0 0 / 60%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: admin-fade-in 0.15s ease-out;
+}
+.admin-password-box {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: min(360px, 90vw);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 30%);
+}
+.admin-password-box h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+.admin-password-box input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 8px;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.admin-password-box input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+.admin-pass-error {
+  color: var(--color-error);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.admin-pass-actions {
+  display: flex;
+  gap: 8px;
+}
+.admin-pass-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.admin-pass-btn--ok {
+  background: var(--color-primary);
+  color: white;
+}
+.admin-pass-btn--ok:hover {
+  background: var(--color-primary-light);
+}
+.admin-pass-btn--cancel {
+  background: #f5f5f5;
+  color: #333;
+}
+.admin-pass-btn--cancel:hover {
+  background: #e8e8e8;
+}
+
+/* Admin toolbar */
+.admin-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--color-primary);
+  color: white;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 20%);
+  flex-wrap: wrap;
+}
+.admin-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.admin-toolbar-badge {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 4px 10px;
+  background: rgb(255 255 255 / 15%);
+  border-radius: 6px;
+}
+.admin-toolbar-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.admin-toolbar-section {
+  background: rgb(255 255 255 / 10%);
+  color: white;
+  border: 0;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.admin-toolbar-section:hover {
+  background: rgb(255 255 255 / 25%);
+}
+.admin-toolbar-section.active {
+  background: white;
+  color: var(--color-primary);
+}
+.admin-toolbar-actions {
+  display: flex;
+  gap: 6px;
+}
+.admin-toolbar-btn {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.admin-toolbar-btn--save {
+  background: #4caf50;
+  color: white;
+}
+.admin-toolbar-btn--save:hover {
+  background: #66bb6a;
+}
+.admin-toolbar-btn--exit {
+  background: #e53935;
+  color: white;
+}
+.admin-toolbar-btn--exit:hover {
+  background: #ef5350;
+}
+
+/* Section hint */
+.admin-section-hint {
+  background: var(--color-primary);
+  color: white;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+/* Editable elements highlight */
+[contenteditable="true"] {
+  outline: 2px dashed #66bb6a !important;
+  outline-offset: 3px;
+  border-radius: 4px;
+  cursor: text;
+  min-height: 1em;
+  padding: 2px 4px;
+  background: rgb(102 187 106 / 8%);
+  transition: outline-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+[contenteditable="true"]:focus {
+  outline: 2px solid #1b5e20 !important;
+  background: rgb(102 187 106 / 20%) !important;
+}
+[contenteditable="true"]:hover {
+  outline: 2px dashed #a5d6a7 !important;
+}
+
+/* Admin toast */
+.admin-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99998;
+  background: var(--color-primary);
+  color: white;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+  animation: toast-in 0.2s ease-out;
+}
+
+/* Hide non-editable sections */
+body.admin-mode [data-content]:not(.admin-current-section) {
+  opacity: 0.15;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+body.admin-mode [data-content].admin-current-section {
+  opacity: 1;
+}
+
+/* Admin mode: hide header/footer/nav by default, show on hover */
+body.admin-mode .site-header,
+body.admin-mode .site-footer,
+body.admin-mode .nav-band,
+body.admin-mode .utility-bar,
+body.admin-mode .back-to-top {
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+  pointer-events: auto;
+}
+body.admin-mode .site-header:hover,
+body.admin-mode .site-footer:hover,
+body.admin-mode .nav-band:hover,
+body.admin-mode .utility-bar:hover {
+  opacity: 1;
+}
+
+@keyframes admin-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px;
+  }
+  .admin-toolbar-left {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-toolbar-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+  .admin-toolbar-section {
+    flex-shrink: 0;
+  }
+  .admin-toolbar-actions {
+    justify-content: stretch;
+  }
+  .admin-toolbar-btn {
+    flex: 1;
   }
 }

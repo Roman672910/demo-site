@@ -10,8 +10,16 @@ import {
 import { openDialog, closeDialog } from './ui.mjs';
 
 const uid = () =>
-  globalThis.crypto?.randomUUID?.() ??
-  `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  `p-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export function initAdminCrud({ notify }) {
   const table = document.querySelector('[data-products-table]');
@@ -19,8 +27,9 @@ export function initAdminCrud({ notify }) {
   const productForm = document.getElementById('product-form');
   const deleteDialog = document.getElementById('delete-dialog');
   let deletingId = null;
+  let extraImages = []; // Массив дополнительных изображений
 
-  // Загрузка изображения с компьютера для продукта
+  // Загрузка изображения с компьютера для продукта (основное)
   const imageFileInput = document.getElementById('p-image-file');
   const imagePreview = document.getElementById('p-image-preview');
   const imageUrlField = document.getElementById('p-image');
@@ -63,6 +72,55 @@ export function initAdminCrud({ notify }) {
     });
   }
 
+  // Дополнительные изображения
+  const extraImageFileInput = document.getElementById('p-extra-image-file');
+  const extraImagesContainer = document.getElementById('product-extra-images');
+
+  if (extraImageFileInput) {
+    extraImageFileInput.addEventListener('change', async () => {
+      const files = extraImageFileInput.files;
+      if (!files?.length) return;
+
+      const newImages = [];
+      for (const file of files) {
+        if (extraImages.length + newImages.length >= 5) {
+          notify('Максимум 5 дополнительных изображений.', true);
+          break;
+        }
+        if (!file.type.startsWith('image/')) continue;
+        if (file.size > 4 * 1024 * 1024) {
+          notify('Файл слишком большой: максимум 4 МБ.', true);
+          continue;
+        }
+
+        const dataUrl = await readFileAsDataURL(file);
+        const imgId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        newImages.push({ id: imgId, src: dataUrl });
+      }
+      extraImages.push(...newImages);
+      renderExtraImages();
+      extraImageFileInput.value = '';
+    });
+  }
+
+  function renderExtraImages() {
+    if (!extraImagesContainer) return;
+    extraImagesContainer.innerHTML = extraImages.map((img, idx) => `
+      <div class="extra-image-item" data-img-id="${img.id}">
+        <img src="${img.src}" alt="Фото ${idx + 1}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--color-border);" />
+        <button class="btn btn--outline btn--tiny btn--danger" type="button" data-remove-extra-img="${img.id}" aria-label="Удалить фото">✕</button>
+      </div>
+    `).join('');
+
+    // Привязка удаления
+    extraImagesContainer.querySelectorAll('[data-remove-extra-img]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        extraImages = extraImages.filter(img => img.id !== btn.dataset.removeExtraImg);
+        renderExtraImages();
+      });
+    });
+  }
+
   function renderTable() {
     const products = getProducts();
     table.innerHTML = products.length
@@ -79,6 +137,7 @@ export function initAdminCrud({ notify }) {
   function openProduct(id = '') {
     productForm.reset();
     productForm.elements.id.value = id;
+    extraImages = [];
     const product = id
       ? getProducts().find((item) => item.id === id)
       : { image: 'assets/images/septic-topas.svg', category: 'station', featured: false };
@@ -91,6 +150,20 @@ export function initAdminCrud({ notify }) {
       if (!field) continue;
       if (field.type === 'checkbox') field.checked = Boolean(value);
       else field.value = value;
+    }
+    // Загружаем дополнительные изображения
+    if (product.images && Array.isArray(product.images) && product.images.length) {
+      extraImages = product.images.map((src, idx) => ({
+        id: `img-${idx}-${Date.now()}`,
+        src,
+      }));
+      renderExtraImages();
+    }
+    // Обновляем превью основного изображения
+    if (product.image && imagePreview) {
+      if (product.image.startsWith('data:') || product.image.startsWith('http')) {
+        imagePreview.innerHTML = `<img src="${product.image}" alt="Превью" style="max-width:100px;max-height:60px;border-radius:6px;border:1px solid var(--color-border);" />`;
+      }
     }
     document.getElementById('product-dialog-title').textContent = id
       ? 'Редактировать септик'
@@ -115,10 +188,20 @@ export function initAdminCrud({ notify }) {
     const data = Object.fromEntries(new FormData(productForm));
     for (const key of ['volume', 'price', 'persons']) data[key] = Number(data[key]);
     data.featured = productForm.elements.featured.checked;
+    // Добавляем дополнительные изображения
+    if (extraImages.length) {
+      data.images = extraImages.map(img => img.src);
+    }
     const error = document.getElementById('product-form-error');
+
     try {
-      if (data.id) updateProduct(data.id, data);
-      else addProduct(data);
+      // Если id есть и валидный — редактируем, иначе создаём новый
+      if (data.id && /^[a-zA-Z0-9_.-]+$/.test(data.id)) {
+        updateProduct(data.id, data);
+      } else {
+        delete data.id;
+        addProduct(data);
+      }
       closeDialog(productDialog);
       renderTable();
       notify('Септик сохранён. Обновите публичные страницы, чтобы увидеть изменения.');
